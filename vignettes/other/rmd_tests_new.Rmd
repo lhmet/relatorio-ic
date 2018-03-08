@@ -1,0 +1,114 @@
+---
+title: "for test"
+output:
+  html_notebook:
+    toc: yes
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+source('/home/jonas/Documents/GITHUB/jbc-ic/R/utils.R')
+```
+
+
+```{r}
+df <- data.frame(var = c(1,NA,2,3,NA,4,5,NA,6,7))
+df
+
+table(is.na(df$var))
+```
+
+```{r}
+pctg_NA(value = df$var, not_NA = T)
+sum(!is.na(df$var))
+```
+
+```{r}
+gaps <- ## quantidade de dados de data_mod
+  data_sel %>%
+  group_by(site) %>%
+  dplyr::summarise(
+    total_raw = n(),
+    valid_tavg = sum(!is.na(tavg)),
+    valid_tavg_by_pctg = pctg(valid_tavg, total_raw, 7),
+    tavg_valid = pctg_NA(value = tavg, houses = 1, not_NA = TRUE),
+    missing = pctg_NA(value = tavg, houses = 1)) %>% 
+  ungroup()
+gaps
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+limiar <- 60
+n_emas_by_month <- records_month %>% 
+  mutate(is_avail = ifelse(tair >= limiar, 1, 0)) %>%
+  group_by(date) %>%
+  summarise(N = sum(is_avail))
+n_emas_by_month
+
+n_emas_by_month %>%
+  ggplot(., aes(x = date, y = N)) +
+  geom_line() +
+  labs(y = "nº de EMAs") +
+  scale_x_datetime(date_breaks = "12 months", 
+                   date_labels = "%Y") +
+  theme_bw()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

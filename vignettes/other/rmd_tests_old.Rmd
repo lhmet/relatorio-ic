@@ -1,0 +1,605 @@
+---
+title: "for test"
+output:
+  html_notebook:
+    toc: yes
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r, message=FALSE}
+# Limpando a área de trabalho
+rm(list = ls())
+
+# Tempo Universal Coordenado
+Sys.setenv(TZ = "UTC")
+```
+
+```{r}
+getwd()
+# setwd("~/Documents/RELATORIO - IC/")
+```
+
+```{r, message=FALSE}
+# Pacotes
+
+packs <- c("dplyr", "ggplot2", "kableExtra", "knitr", "lubridate", "magrittr", "openair", "padr", "plyr", "scales","stringr", "tidyverse")
+easypackages::libraries(packs)
+rm(packs)
+```
+
+```{r, message=FALSE}
+# Scripts
+
+# source("R/crv_detect.R")
+# source("../R/expected_rows.R")
+source("/home/jonas/Documents/GITHUB/jbc-ic/R/gg_bubble.R")
+source("/home/jonas/Documents/GITHUB/jbc-ic/R/grama_phps.R")
+# source("../R/qc_tests.R")
+source("/home/jonas/Documents/GITHUB/jbc-ic/R/utils.R")
+```
+
+```{#r}
+# Local onde os dados estão
+data_file <- "/home/jonas/Documents/GITHUB/jbc-ic/output/derived_data/var-data-inmet-2008-2016-4yrs-south.rds"
+info_file <- "/home/jonas/Documents/GITHUB/jbc-ic/output/derived_data/var-info-inmet-2008-2016-4yrs-south.rds"
+
+# Importação dos dados do local
+var_data <- readRDS(data_file) %>% arrange(site)
+var_data
+
+# Metadados do INMET corrigidos e atualizados.(see R/aws-inmet-metadata.R)
+var_info <- readRDS(info_file)
+var_info
+
+rm(data_file, info_file)
+```
+
+```{r}
+old_file <- "/home/jonas/Documents/GITHUB/jbc-ic/data_saves/summary_old.rds"
+new_file <- "/home/jonas/Documents/GITHUB/jbc-ic/data_saves/summary_new.rds"
+
+# Carregando summaries
+summary_old <- readRDS(old_file)
+summary_new <- readRDS(new_file)
+
+summary_old
+summary_new %>% arrange(desc(period))
+
+rm(old_file, new_file)
+```
+
+```{r}
+estados_sul <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/data_saves/south_states.rds")
+estados_sul
+```
+######################################################################
+
+```{r}
+summary_new %>% filter(state == "PR")
+summary_new %>% filter(state == "RS")
+summary_new %>% filter(state == "SC")
+```
+
+######################################################################
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = summary_old,
+  variable = 'alt',
+  limits = estados_sul,
+  legend = 'Altitude (em metros)',
+  title = '(a)')
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = summary_old,
+  variable = 'period',
+  limits = estados_sul,
+  legend = 'Período (em anos)',
+  title = '(b)')
+```
+
+```{r, message=FALSE, fig.width=9.3, fig.height=7.25, fig.align='center'}
+emas_ori <-
+  annual.bubble(
+    summary = summary_old,
+    states = estados_sul,
+    title = "(c)")
+emas_ori
+```
+
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = summary_old,
+  variable = 'pctg_valid_tavg',
+  limits = estados_sul,
+  legend = 'Disponibilidade (em %)',
+  title = '(d)')
+```
+
+
+```{#r histo_test, fig.height=14, fig.asp=1.2}
+histo.tavg(data = data_var)
+```
+
+######################################################################
+
+[RESULTADOS:]
+
+(QC1:)
+a)
+```{r, message=TRUE}
+qc1a_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1a-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc1a_application
+
+qc1a_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1a-metadata-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc1a_metadata
+
+qc1a_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1a-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>% 
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc1a_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc1a_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 1a')
+```
+
+b)
+```{r, message=TRUE}
+qc1b_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1b-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc1b_application
+
+qc1b_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1b-metadata-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc1b_metadata
+
+qc1b_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc1b-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc1b_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc1b_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 1b')
+```
+
+(QC2:)
+a)
+```{r, message=TRUE}
+qc2_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc2-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc2_application
+
+qc2_metadata  <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc2-metadata-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc2_metadata
+
+qc2_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc2-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc2_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc2_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 2')
+```
+
+
+(QC3:)
+a)
+```{r, message=TRUE}
+qc3a_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3a-application-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc3a_application
+
+qc3a_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3a-metadata-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc3a_metadata
+
+qc3a_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3a-summary-tmin-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3a_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3a_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3a')
+```
+
+
+b)
+```{r, message=TRUE}
+qc3b_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3b-application-tinst-data-inmet-2008-2016-4yrs-south.rds")
+qc3b_application
+
+qc3b_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3b-metadata-tinst-data-inmet-2008-2016-4yrs-south.rds")
+qc3b_metadata
+
+qc3b_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3b-summary-tinst-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3b_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3b_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3b')
+```
+
+
+c)
+```{r, message=TRUE}
+qc3c_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3c-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3c_application
+
+qc3c_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3c-metadata-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3c_metadata
+
+qc3c_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3c-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3c_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3c_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3c')
+```
+
+
+d)
+```{r, message=TRUE}
+qc3d_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3d-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3d_application
+
+qc3d_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3d-metadata-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3d_metadata
+
+qc3d_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3d-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3d_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3d_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3d')
+```
+
+
+e)
+```{r, message=TRUE}
+qc3e_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3e-application-tmax-data-inmet-2008-2016-4yrs-south.rds")
+qc3e_application
+
+qc3e_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3e-metadata-tmax-data-inmet-2008-2016-4yrs-south.rds")
+qc3e_metadata
+
+qc3e_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3e-summary-tmax-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3e_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3e_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3e')
+```
+
+f)
+```{r, message=TRUE}
+qc3f_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3f-application-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc3f_application
+
+qc3f_metadata <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3f-metadata-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc3f_metadata
+
+qc3f_summary <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc3f-summary-tmin-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc3f_summary
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc3f_summary,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 3f')
+```
+
+
+(QC4:)
+a)
+```{r, message=TRUE}
+qc4a_application <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-application-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_application
+
+qc4a_metadata_01h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-metadata-tavg-01h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_metadata_02h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-metadata-tavg-02h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_metadata_03h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-metadata-tavg-03h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_metadata_06h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-metadata-tavg-06h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_metadata_12h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-metadata-tavg-12h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_metadata_01h
+qc4a_metadata_02h
+qc4a_metadata_03h
+qc4a_metadata_06h
+qc4a_metadata_12h
+
+qc4a_summary_01h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-01h-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc4a_summary_02h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-02h-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc4a_summary_03h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-03h-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc4a_summary_06h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-06h-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc4a_summary_12h <- readRDS(
+  file = "/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-12h-data-inmet-2008-2016-4yrs-south.rds") %>%
+  left_join(select(summary_new, site, name, lat, lon), by = "site") %>%
+  select(site, name, everything()) %>%
+  filter(tot >= 0) %>%
+  arrange(desc(tot), site)
+qc4a_summary_01h
+qc4a_summary_02h
+qc4a_summary_03h
+qc4a_summary_06h
+qc4a_summary_12h
+```
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+simple.bubble(
+  data = qc4a_summary_01h,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 4a (01h)')
+
+simple.bubble(
+  data = qc4a_summary_02h,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 4a (02h)')
+
+simple.bubble(
+  data = qc4a_summary_03h,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 4a (03h)')
+
+simple.bubble(
+  data = qc4a_summary_06h,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 4a (06h)')
+
+simple.bubble(
+  data = qc4a_summary_12h,
+  variable = 'tot',
+  limits = estados_sul,
+  legend = 'Suspeitos (em horas)',
+  title = 'QC 4a (12h)')
+```
+
+
+```{r}
+qc1a <- qc1a_summary %>% select(site, tot1a = tot)
+qc1b <- qc1b_summary %>% select(site, tot1b = tot)
+qc2 <- qc2_summary %>% select(site, tot2 = tot)
+qc3a <- qc3a_summary %>% select(site, tot3a = tot)
+qc3b <- qc3b_summary %>% select(site, tot3b = tot)
+qc3c <- qc3c_summary %>% select(site, tot3c = tot)
+qc3d <- qc3d_summary %>% select(site, tot3d = tot)
+qc3e <- qc3e_summary %>% select(site, tot3e = tot)
+qc3f <- qc3f_summary %>% select(site, tot3f = tot)
+qc4a_01h <- qc4a_summary_01h %>% select(site, tot4a01h = tot)
+qc4a_02h <- qc4a_summary_02h %>% select(site, tot4a02h = tot)
+qc4a_03h <- qc4a_summary_03h %>% select(site, tot4a03h = tot)
+qc4a_06h <- qc4a_summary_06h %>% select(site, tot4a06h = tot)
+qc4a_12h <- qc4a_summary_12h %>% select(site, tot4a12h = tot)
+
+qc1 <- full_join(qc1a, qc1b, by = 'site')
+
+qc2
+
+qc3ab <- full_join(qc3a, qc3b, by = 'site')
+qc3cd <- full_join(qc3c, qc3d, by = 'site')
+qc3ef <- full_join(qc3e, qc3f, by = 'site')
+qc3abcd <- full_join(qc3ab, qc3cd, by = 'site')
+qc3 <- full_join(qc3abcd, qc3ef, by = 'site')
+
+qc4_12 <- full_join(qc4a_01h, qc4a_02h, by = 'site')
+qc4_36 <- full_join(qc4a_03h, qc4a_06h, by = 'site')
+qc4_3612 <- full_join(qc4_36, qc4a_12h, by = 'site')
+qc4 <- full_join(qc4_12, qc4_3612, by = 'site')
+
+qc12 <- full_join(qc1, qc2, by = 'site')
+qc34 <- full_join(qc3, qc4, by = 'site')
+
+qc_all <- suspects
+qc_all <- full_join(qc12, qc34, by = 'site') %>% arrange(site)
+qc_all[,1:15][is.na(qc_all[,1:15])] <- 0
+saveRDS(qc_all, "emas_suspect.rds")
+
+```
+
+
+```{r}
+suspects <- readRDS("emas_suspect.rds")
+
+s <- suspects %>% group_by(site) %>% summarise(suspema = tot1a + tot1b + tot2 + tot3a + tot3b + tot3c + tot3d + tot3e + tot3f + tot4a01h + tot4a02h + tot4a03h + tot4a06h + tot4a12h)
+
+df <- data.frame(select(suspects, site), s)
+df
+
+saveRDS(df, "emas_all_suspect.rds")
+
+suspema <- readRDS("emas_all_suspect.rds")
+
+last_var <- full_join(select(summary_new, site, state, name), suspema, by = "site")
+
+saveRDS(last_var, "ALL_SUSPECT_DATA.rds")
+
+
+
+readRDS("ALL_SUSPECT_DATA.rds") %>% arrange(desc(suspema))
+
+suspects %>% arrange(desc(tot2))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

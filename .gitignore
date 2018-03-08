@@ -1,0 +1,11 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.git
+.vignettes/*.html
+.vignettes/other/*.Rmd
+.vignettes/other/*.html
+.vignettes/other/*.nb.html
+.vignettes/other/*.docx
+

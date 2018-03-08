@@ -1,0 +1,136 @@
+---
+title: "Gráficos de bolhas do periodo nao padronizado"
+author: "Carolina Kannenberg"
+date: '`r Sys.Date()`'
+output: html_notebook
+---
+
+
+
+# Introdução
+
+
+
+# Pré-requisitos
+
+
+```{r setup, include=FALSE}
+# limpando objetos da espaço de trabalho
+rm(list = ls()) 
+
+# pacotes
+
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(scales)
+library(magrittr)
+
+# carregando função de plot com bolhas
+
+source("../R/grafico_bolhas_z.R")
+
+# definindo globalmente tz = "UTC"
+Sys.setenv(TZ = "UTC")
+```
+
+
+# Carregando dados necessários 
+
+```{r}
+info_sumary <- readRDS(file = "../output/info_inmet_sul_4ylong.rds")
+mdet_df <- readRDS("../output/mdet_sulBR_900m.rds")
+estados_sul_f <- readRDS("../output/estados_sul_fortify.rds")
+```
+
+# Gráfico com período de dados
+
+```{r Periodo, fig.width=9.3, fig.height=7.25, fig.align='center' }
+
+periodo <-  plot_bolhas(informacao = info_sumary
+                        ,z = info_sumary$period
+                        ,z.legenda = "Período de dados (anos)"
+                        ,z.color = "YlOrRd"
+                        ,site.color = "gray77") 
+plot(periodo)
+``` 
+
+
+
+# Ajustando info_summary para diferenciar EMAs antes e após 2008
+
+```{r}
+classe <- as.integer(year(info_sumary$sdate) < 2008)
+          
+info_sumary$classe <- factor(classe)
+```
+
+
+# Gráfico EMAS pré e pós 2008
+
+```{r Pre_pos_2008, fig.width=9.3, fig.height=7.25, fig.align='center'}
+# Fazendo o gráfico
+pre_pos_2008_graf <- 
+   ggplot(data = estados_sul_f, 
+          aes(x = long, 
+                y = lat)) + 
+   coord_equal() +
+   geom_polygon(aes(group = group),
+                color = "gray57", 
+                fill = "burlywood3") +
+   theme_bw() +
+  geom_point(data = info_sumary, 
+             aes(x = lon,
+                 y = lat, 
+                 colour = classe),
+             size = 8,
+             shape = 20, 
+             show.legend = TRUE) +
+  scale_colour_manual(name="Data inicial",
+                      labels = c("depois de 2008", "antes de 2008"),
+                      values = c("red", "blue")) +
+  geom_text(data = info_sumary, 
+            aes(x = lon, 
+                y = lat, 
+                label = site), 
+            fontface = "bold",
+            vjust = -1.4,
+            col = "black",
+            size = 2.8) +
+  #ggplot(data = mdet_df) + 
+  #geom_raster(aes(lon, lat, fill = alt)) +
+  #scale_fill_gradientn(colors = viridis(n= 256, option = "inferno")) +
+  scale_y_continuous(breaks = pretty_breaks(5),
+                     minor_breaks = pretty_breaks(20),
+                     expand = c(0, 0), 
+                     name = expression(Latitude~~(degree)),
+                     limits = c(-34.5, -22))+
+  scale_x_continuous(breaks = pretty_breaks(5),
+                     minor_breaks = pretty_breaks(20),
+                     expand = c(0, 0), 
+                     name = expression(Longitude~~(degree))) +
+  # Ajustando temas  
+  theme(panel.background = element_rect(fill = "transparent",colour = NA),
+        plot.background = element_rect(fill = "transparent",colour = NA),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16, angle = 90),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        legend.position = "right",
+        legend.title = element_text() )
+plot(pre_pos_2008_graf)
+```
+
+
+```{r Disponibilidade_anos, fig.width=9.3, fig.height=7.25, fig.align='center'}
+
+dis_anos <-  plot_bolhas(informacao = info_sumary
+                        ,z = info_sumary$disp_anos
+                        ,z.legenda = "Disponibilidade de dados (anos)"
+                        ,z.color = "YlOrRd"
+                        ,site.color = "gray77")  
+plot(dis_anos)
+
+```
+

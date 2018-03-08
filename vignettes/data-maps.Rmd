@@ -1,0 +1,440 @@
+---
+title: "Mapas para o relatório"
+author: "Jonas Barboza Corrêa"
+output:
+  html_notebook:
+    toc: yes
+  html_document:
+    fig_caption: yes
+    fig_width: 6
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+---
+
+# Carregamentos iniciais
+
+```{r, message=FALSE, echo=FALSE}
+# Limpando a área de trabalho
+rm(list = ls())
+
+# Tempo Universal Coordenado
+Sys.setenv(TZ = "UTC")
+
+# Pacotes
+packs <- c("dplyr", "ggplot2", "kableExtra", "knitr","lattice", "lubridate", "magrittr", "maptools","openair", "padr", "raster", "RColorBrewer","scales", "sp", "stats", "stringr", "tidyverse", "zoo") # "plyr", "oro.nifti" (alternativa ao "topo.colors" para a plotagem)
+
+easypackages::libraries(packs)
+rm(packs)
+
+# Scripts
+source('/home/jonas/Documents/GITHUB/jbc-ic/R/gg_bubble.R')
+source("/home/jonas/Documents/GITHUB/relatorio-ic/R/create.R")
+source('/home/jonas/Documents/GITHUB/relatorio-ic/R/grama_psph.R')
+
+# Limites
+estados <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/data_saves/south_states.rds")
+mdet_sulBR <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/data/mdet_sulBR_900m.rds")
+
+# Summaries
+summary_91 <-
+  readRDS('/home/jonas/Documents/GITHUB/jbc-ic/data_saves/summary_91.rds')
+summary_91
+
+summary_80 <-
+  readRDS('/home/jonas/Documents/GITHUB/jbc-ic/data_saves/summary_80.rds')
+summary_80
+
+# Records
+records_month <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/data_saves/PAD_records_month.rds")
+records_month
+
+# Suspect by
+directory <- "/home/jonas/Documents/GITHUB/jbc-ic/output/"
+
+```
+
+```{r}
+# Carregando produtos 3
+
+qc1a <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc1a-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") # 0
+qc1b <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc1b-summary-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc2a <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc2a-summary-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3a <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3a-summary-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc3b <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3b-summary-tinst-data-inmet-2008-2016-4yrs-south.rds")
+qc3c <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3c-summary-tavg-data-inmet-2008-2016-4yrs-south.rds")
+qc3d <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3d-summary-tavg-data-inmet-2008-2016-4yrs-south.rds") # 0
+qc3e <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3e-summary-tmax-data-inmet-2008-2016-4yrs-south.rds")
+qc3f <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc3f-summary-tmin-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_01h <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-01h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_02h <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-02h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_03h <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-03h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_06h <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-06h-data-inmet-2008-2016-4yrs-south.rds")
+qc4a_12h <- readRDS("/home/jonas/Documents/GITHUB/jbc-ic/output/qc4a-summary-tavg-12h-data-inmet-2008-2016-4yrs-south.rds")
+```
+
+```{r}
+bysite <- suspect.by.site(DIRECTORY = directory, SUMMARY = summary_80)
+bysite
+```
+
+
+# Help "grama.phps.create()"
+
+```{r help}
+grama.phps.create(HELP = T)
+```
+
+# Figura 01
+
+## (a) Mapa: Altitude (91 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "relevo",
+  mdet_df = mdet_sulBR,
+#  STATES = estados,
+  SUMMARY = summary_91, 
+  WITH_TITLE = T,
+  TITLE = "(a)",
+  SAVE = T,
+  NAME_SAVE = "img_altitude.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (b) Mapa: Período (91 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = F,
+  SUMMARY = summary_91,
+  VARIABLE = "period",
+  STATES = estados,
+  VAR_LEGEND = "Período (em anos)", 
+  WITH_TITLE = T,
+  TITLE = "(b)",
+  SAVE = T,
+  NAME_SAVE = "img_periodo.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (c) Mapa: Inicio de funcionamento antes e depois de 2008 (91 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "prepos",
+  STATES = estados,
+  SUMMARY = summary_91,
+  REFER_ANO = 2008,
+  SAVE = T,
+  NAME_SAVE = "img_prepos2008.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (d) Mapa: Disponibilidade (80 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = F,
+  SUMMARY = summary_80,
+  VARIABLE = "YEAR_pctg_valid_tavg",
+  STATES = estados,
+  VAR_LEGEND = "Disponibilidade (em %)",
+  SAVE = T,
+  NAME_SAVE = "img_disponibilidade.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# Disponibilidade Mensal (91 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "yellow",
+  MAKE_RECORDS = F,
+  DATA_RECORDS = records_month,
+  VARIABLE = "tavg",
+  WITH_TITLE = T,
+  TITLE = "(a)",
+  SAVE = T,
+  NAME_SAVE = "img_dispomen.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# Evoluação Mensal (91 EMAs)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "K",
+  MAKE_RECORDS = F,
+  DATA_RECORDS = records_month,
+  VARIABLE = "tavg",
+  LIMIAR = 1,
+  WITH_TITLE = T,
+  TITLE = "(b)",
+  SAVE = T,
+  NAME_SAVE = "img_evomen.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# QC 1
+
+## (a)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center'}
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc1a, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc1a.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (b)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc1b, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc1b.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# QC 2a
+
+## (a)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc2a, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc2a.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# QC 3
+
+## (a)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3a, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3a.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (b)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3b, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3b.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (c)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3c, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3c.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (d)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3d, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em dias)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3d.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (e)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3e, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em dias)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3e.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+## (f)
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc3f, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em dias)",
+  SAVE = T,
+  NAME_SAVE = "img_qc3f.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# QC 4
+
+## (a)
+
+### 01h
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc4a_01h, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc4a_01h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+### 02h
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc4a_02h, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc4a_02h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+### 03h
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc4a_03h, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc4a_03h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+### 06h
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc4a_06h, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc4a_06h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+### 12h
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = T,
+  PRODUCT3 = qc4a_12h, 
+  SUMMARY = summary_80,
+  VARIABLE = "tot",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  SAVE = T,
+  NAME_SAVE = "img_qc4a_12h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# Total por EMA (QCs horários)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = F,
+  SUMMARY = bysite,
+  VARIABLE = "suspect_hour",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em horas)",
+  WITH_TITLE = T,
+  TITLE = "(a)",
+  SAVE = T,
+  NAME_SAVE = "img_totEMA_h.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+# Total por EMA (QCs diários)
+
+```{r, fig.width=9.3, fig.height=7.25, fig.align='center' }
+grama.phps.create(
+  TYPE = "bubble",
+  IS_QC = F,
+  SUMMARY = bysite,
+  VARIABLE = "suspect_day",
+  STATES = estados,
+  VAR_LEGEND = "Suspeitos (em dias)",
+  WITH_TITLE = T,
+  TITLE = "(b)",
+  SAVE = T,
+  NAME_SAVE = "img_totEMA_d.png",
+  DIRECTORY_SAVE = "/home/jonas/Documents/GITHUB/relatorio-ic/images")
+```
+
+
+
+
+
+
+
